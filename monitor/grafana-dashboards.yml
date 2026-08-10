@@ -1,0 +1,12 @@
+# Sprint 8-E Task 11: Grafana Dashboard 自动加载配置
+apiVersion: 1
+
+dashboardProviders:
+  - name: 'default'
+    orgId: 1
+    folder: 'FocusOS AI'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards

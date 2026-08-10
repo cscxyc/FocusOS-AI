@@ -1,0 +1,151 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  application:
+    name: focusos-ai
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:focusos_db}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:focusos}
+    password: ${MYSQL_PASSWORD:focusos_pass}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    defer-datasource-initialization: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - dev.langchain4j.openai.spring.OpenAiAutoConfiguration
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+  sql:
+    init:
+      mode: never
+
+focusos:
+  jwt:
+    secret: ${JWT_SECRET:please-change-this-256-bit-secret-key-in-production-environment}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+    refresh-expiration-ms: 604800000
+  file:
+    upload-dir: ${UPLOAD_DIR:./backend/uploads}
+  ai:
+    api-key: ${LLM_API_KEY:}
+    base-url: ${LLM_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+    model: ${LLM_MODEL:qwen-plus}
+    embedding-model: ${LLM_EMBEDDING_MODEL:text-embedding-v2}
+  milvus:
+    host: ${MILVUS_HOST:localhost}
+    port: ${MILVUS_PORT:19530}
+    username: ${MILVUS_USERNAME:}
+    password: ${MILVUS_PASSWORD:}
+    collection-name: ${MILVUS_COLLECTION:focusos_rag_vectors}
+    # text-embedding-v2 默认维度为1536
+    embedding-dimension: ${MILVUS_DIM:1536}
+    # 启动时自动检查/创建 collection，已有文档自动重建向量
+    auto-init: ${MILVUS_AUTO_INIT:true}
+    auto-rebuild: ${MILVUS_AUTO_REBUILD:false}
+    # 是否启用 Milvus（false 时降级到 InMemoryEmbeddingStore，仅用于本地无 Milvus 服务的测试场景）
+    enabled: ${MILVUS_ENABLED:true}
+  # Sprint 8-E: Redis 配置（不可用时自动降级到本地内存）
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 4
+        min-idle: 0
+  # Sprint 8-E: Agent Worker 线程池配置
+  agent:
+    worker:
+      core-pool-size: ${AGENT_WORKER_CORE:5}
+      max-pool-size: ${AGENT_WORKER_MAX:20}
+      queue-capacity: ${AGENT_WORKER_QUEUE:100}
+      keep-alive-seconds: 60
+  # Sprint 8-E: LLM Gateway 配置
+  llm-gateway:
+    timeout-seconds: ${LLM_TIMEOUT:60}
+    # 模型路由：不同 Agent 使用不同模型
+    routing:
+      career: qwen-plus
+      career_growth: qwen-plus
+      interview: qwen-plus
+      resume_evaluator: qwen-plus
+      resume-optimization: qwen-plus
+      evaluation: qwen-turbo
+      memory: qwen-turbo
+      rag: qwen-turbo
+      learning: qwen-turbo
+    # Fallback 链：主模型失败 → 备用模型 → 本地降级
+    fallback-chain: qwen-plus,qwen-turbo
+  # Sprint 8-E: 用户配额
+  quota:
+    default-daily-token-limit: ${DEFAULT_DAILY_TOKEN:10000}
+    premium-daily-token-limit: ${PREMIUM_DAILY_TOKEN:100000}
+    # Token 单价（每 1000 token 的成本，用于估算）
+    cost-per-1k-input-tokens: 0.004
+    cost-per-1k-output-tokens: 0.012
+  # Sprint 8-E: Redis 缓存开关（false 时降级到本地 Caffeine 缓存）
+  cache:
+    enabled: ${CACHE_ENABLED:true}
+    ttl-minutes: 30
+
+# Sprint 8-E: Actuator + Prometheus 监控端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: focusos-ai
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        llm.latency: true
+        workflow.duration: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+        step: 30s
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.focusos: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
+    org.springframework.web: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: ./logs/focusos-ai.log

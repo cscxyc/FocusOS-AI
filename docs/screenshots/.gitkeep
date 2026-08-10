@@ -1,0 +1,8 @@
+# Placeholder for screenshots - replace with actual screenshots before GitHub release.
+# Recommended screenshots:
+#   - dashboard.png         : Dashboard 首页（5 张职业状态卡片 + Career Timeline）
+#   - career-workflow.png   : Career Workflow 执行过程（Agent DAG 可视化）
+#   - resume-workspace.png  : Resume Workspace（编辑器 + Diff 对比）
+#   - interview.png         : Interview Agent（模拟面试问答 + 评分）
+#   - workflow-detail.png   : Workflow Detail 页面（Task 列表 + LLM 汇总）
+#   - grafana.png           : Grafana 监控仪表盘

@@ -1,0 +1,114 @@
+# ============================================================
+# FocusOS AI - .gitignore
+# ============================================================
+
+# ===== Backend (Java / Spring Boot / Maven) =====
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.ctxt
+hs_err_pid*
+replay_pid*
+.mtj.tmp/
+.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+spring-shell.log
+
+# ===== Gradle (legacy) =====
+.gradle/
+build/
+!gradle-wrapper.jar
+
+# ===== Backend Runtime Artifacts =====
+backend/logs/
+backend/milvus_data/
+backend/uploads/
+*.log
+*.log.gz
+
+# ===== Frontend (Node.js / Next.js) =====
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+.cache/
+.parcel-cache
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+next-env.d.ts
+
+# ===== Environment Variables (DO NOT COMMIT) =====
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# ===== IDE - IntelliJ IDEA =====
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# ===== IDE - Eclipse =====
+.classpath
+.project
+.settings/
+bin/
+
+# ===== IDE - VSCode =====
+.vscode/
+*.code-workspace
+
+# ===== OS - Windows =====
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ===== OS - macOS =====
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ===== OS - Linux =====
+*~
+
+# ===== Logs / Runtime =====
+logs/
+pids/
+*.pid
+*.seed
+
+# ===== Docker =====
+docker-compose.override.yml
+
+# ===== Build / Coverage =====
+coverage/
+.nyc_output/
+lib-cov/
+
+# ===== Dependency Directories =====
+jspm_packages/
+.webpack/
+
+# ===== Test Files / Local Data (Personal) =====
+test-files/
+backend/test.txt
+
+# ===== Misc =====
+*.swp
+*.swo
+*.bak
+*.tmp
+.history/
