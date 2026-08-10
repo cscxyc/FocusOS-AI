@@ -1,9 +1,7 @@
-﻿FROM maven:3.9-eclipse-temurin-17 AS build
+FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 
 COPY pom.xml .
-COPY .mvn/ .mvn/
-COPY mvnw ./
 
 RUN mvn dependency:go-offline -B -q 2>/dev/null || true
 
@@ -16,7 +14,7 @@ WORKDIR /app
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-COPY --from=build /app/target/focusos-backend-*.jar app.jar
+COPY --from=build /app/target/focusos-ai-*.jar app.jar
 
 RUN chown -R appuser:appgroup /app
 
