@@ -62,10 +62,12 @@ jobs:
           path: backend/target/surefire-reports/
 
   # ============================================================
-  # Stage 2: Docker Build & Push (仅 main 分支)
+  # Stage 2: Docker Build (仅构建验证，不推送镜像)
+  # 如需推送到 Docker Hub，请在 Settings → Secrets 配置 DOCKER_USERNAME / DOCKER_TOKEN
+  # 并将下方 push 改为 true，将镜像名改为 ${{ secrets.DOCKER_USERNAME }}/focusos-ai
   # ============================================================
   docker-build:
-    name: Docker Build & Push
+    name: Docker Build (Verity Only)
     runs-on: ubuntu-latest
     needs: build-test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -76,27 +78,21 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
-
       - name: Extract Metadata
         id: meta
         run: |
           echo "VERSION=${GITHUB_REF##*/}-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "TIMESTAMP=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
 
-      - name: Build and Push Docker Image
+      - name: Build Docker Image (Local Only, No Push)
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           file: ./backend/Dockerfile
-          push: true
+          push: false
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/focusos-ai:latest
-            ${{ secrets.DOCKER_USERNAME }}/focusos-ai:${{ steps.meta.outputs.VERSION }}
+            focusos-ai:latest
+            focusos-ai:${{ steps.meta.outputs.VERSION }}
           labels: |
             org.opencontainers.image.title=FocusOS AI
             org.opencontainers.image.version=${{ steps.meta.outputs.VERSION }}
@@ -104,32 +100,32 @@ jobs:
             org.opencontainers.image.created=${{ steps.meta.outputs.TIMESTAMP }}
 
   # ============================================================
-  # Stage 3: 部署到生产环境（手动触发，可选）
+  # Stage 3: Docker Compose Integration Check
+  # 验证 docker-compose.yml 语法正确性（可选，仅 main 分支）
   # ============================================================
-  deploy:
-    name: Deploy to Production
+  compose-check:
+    name: Docker Compose Check
     runs-on: ubuntu-latest
     needs: docker-build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment:
-      name: production
-      url: https://focusos.example.com
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            cd /opt/focusos-ai
-            git pull origin main
-            export LLM_API_KEY=${{ secrets.LLM_API_KEY }}
-            export MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-            docker compose pull
-            docker compose up -d --remove-orphans
-            docker image prune -f
-            echo "Deploy completed at $(date)"
+      - name: Validate docker-compose.yml
+        run: |
+          echo "Validating docker-compose.yml..."
+          # Python 3.9+ has tomllib, use pip install pyyaml for YAML parsing
+          pip install pyyaml
+          python3 -c "
+          import yaml, sys
+          try:
+              with open('docker-compose.yml', 'r') as f:
+                  data = yaml.safe_load(f)
+              assert 'services' in data, 'Missing services key'
+              print('docker-compose.yml: VALID')
+              print(f'Services: {list(data[\"services\"].keys())}')
+          except Exception as e:
+              print(f'INVALID: {e}')
+              sys.exit(1)
+          "
